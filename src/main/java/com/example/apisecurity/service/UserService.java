@@ -1,5 +1,6 @@
 package com.example.apisecurity.service;
 
+import com.example.apisecurity.data.Token;
 import com.example.apisecurity.data.User;
 import com.example.apisecurity.data.UserDao;
 import com.example.apisecurity.exception.InvalidCredentialError;
@@ -41,7 +42,16 @@ public class UserService {
         if(!passwordEncoder.matches(password,user.getPassword())){
             throw new InvalidCredentialError();
         }
-        return Login.of(user.getId(), accessSecret,refreshSecret);
+        var login = Login.of(user.getId(), accessSecret,refreshSecret);
+        var refreshToken = login.getRefreshToken();
+        user.addToken(new Token(
+                refreshToken.getToken(),
+                refreshToken.getIssuedAt(),
+                refreshToken.getExpiredAt()
+        ));
+        userDao.save(user);
+
+        return login;
     }
     public User register(String firstName,
                          String lastName,
